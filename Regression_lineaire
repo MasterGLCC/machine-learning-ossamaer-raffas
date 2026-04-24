@@ -1,1 +1,14 @@
+import numpy as np  # importer la bibliothèque numpy pour les calculs mathématiques et les tableaux
+import matplotlib.pyplot as plt#    # importer la bibliothèque  matplotlib.pyplot pour les courb
+
+import pandas as pd  # importer la bibliothèque
+
+
+
+#  data base
+data=pd.read_csv('Salary_Data.csv')
+data # afficher les donner s il exest
+
+
+
 
