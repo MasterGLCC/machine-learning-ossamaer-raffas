@@ -1,5 +1,5 @@
 import numpy as np  # importer la bibliothèque numpy pour les calculs mathématiques et les tableaux
-import matplotlib.pyplot as plt#    # importer la bibliothèque  matplotlib.pyplot pour les courb
+import matplotlib.pyplot as plt#    
 
 import pandas as pd  # importer la bibliothèque
 
@@ -8,6 +8,151 @@ import pandas as pd  # importer la bibliothèque
 #  data base
 data=pd.read_csv('Salary_Data.csv')
 data # afficher les donner s il exest
+
+X = data[['YearsExperience']].values  # selectionner le colone matrice n x 1 selectioner les colone
+
+y = data['Salary'].values #selectioner le  Salary #vecteur
+
+
+# Cette partie sert à afficher un graphique pour voir la relation entre les données
+
+plt.scatter(data['YearsExperience'], y)
+# Crée un nuage de points :
+# - axe X : YearsExperience (expérience)
+# - axe Y : y (salaire)
+# Chaque point représente une observation
+
+plt.xlabel('YearsExperience')
+# Donne un nom à l’axe horizontal (X)
+
+plt.ylabel('Salary')
+# Donne un nom à l’axe vertical (Y)
+
+plt.show()
+# Affiche le graphique à l’écran
+
+
+
+
+
+
+class SimpleLinearRegression:
+    
+    def __init__(self):
+        self.coefficients_ = None   # 
+        self.r2score_ = None        # score R²
+        self.y_pred = None          # prédictions
+    
+    def fit(self, X, y):
+        # Nombre de donner
+        n = X.shape[0]
+        
+        # Ajouter une colonne de 1 pour le biais (intercept)
+        X_b = np.c_[np.ones((n, 1)), X]
+        
+        # Calcul des coefficients avec la formule normale :
+        # θ = (XᵀX)^(-1) Xᵀy
+        self.coefficients_ = np.linalg.inv(X_b.T.dot(X_b)).dot(X_b.T).dot(y)
+        
+        # Faire les prédictions sur X
+        y_pred = X_b.dot(self.coefficients_)
+        self.y_pred = y_pred
+        
+        # Calcul du R²
+        ss_total = np.sum((y - np.mean(y))**2)
+        ss_res = np.sum((y - y_pred)**2)
+        
+        if ss_total == 0:
+            self.r2score_ = 1 if ss_res == 0 else 0
+        else:
+            self.r2score_ = 1 - (ss_res / ss_total)
+    
+    def predict(self, X):
+        # Nombre de donner
+        n = X.shape[0]
+        
+        # Ajouter colonne de 1
+        X_b = np.c_[np.ones((n, 1)), X]
+        
+        # Prédiction
+        return X_b.dot(self.coefficients_)
+
+
+
+
+
+
+slr=SimpleLinearRegression()  #  Crée un  modèle de type SimpleLinearRegression
+slr.fit(X,y)   #    Entraîne le modèle sur les données X (entrées) et y (sorties)
+
+
+
+
+print("simple lr coefficients:",slr.coefficients_)  # Affiche les coefficients du modèle (intercept et pente)
+print("R2 Score:",slr.r2score_)    # Affiche le score R² qui mesure la qualité de l'ajustement du modèle
+#Très bon ajustement (proche de 1 = parfait).
+
+
+
+
+
+
+
+
+
+
+# Split manuel des données 80% train # 20% test
+train_size = int(0.8 * len(X))  # Détermine la taille de l'ensemble d'entraînement 80% 
+X_train, X_test = X[:train_size], X[train_size:] # Sélectionne les 80% premières données pour l'entraînement (X_train)
+y_train, y_test = y[:train_size], y[train_size:]  ## Sélectionne les données correspondantes pour y_train et y_test
+
+
+#fait la Prédictions sur les données d'entraînement
+y_train_pred = slr.predict(X_train)
+
+# fait laPrédictions sur les données de test
+y_test_pred = slr.predict(X_test)
+
+
+# Calcul du MSE
+MSE = np.mean((y_test - y_test_pred)**2) # clculer moyen
+print("MSE :", MSE)
+
+plt.scatter(X, y, color='blue', label='Data')
+# Affiche les données sous forme de nuage de points (scatter plot)
+# X → axe horizontal
+# y → axe vertical
+# color='blue' → couleur des points en bleu
+# label='Data' → nom utilisé dans la légende
+
+plt.plot(X, slr.y_pred, color='red', label='regression lineare')
+# Trace la droite de régression
+# X → mêmes valeurs sur l’axe horizontal
+# slr.y_pred → valeurs prédites par le modèle (ŷ)
+# color='red' → couleur de la droite en rouge
+# label → nom dans la légende
+
+plt.title("regression lineaire simple")
+# Ajoute un titre au graphique
+
+plt.xlabel("X")
+# Nom de l’axe horizontal
+
+plt.ylabel("y")
+# Nom de l’axe vertical
+
+plt.legend()
+# Affiche la légende 
+plt.show()
+# Affiche le graphique final
+
+
+
+
+
+
+
+
 
 
 
