@@ -1,136 +1,101 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-import pandas as pd
-
 
 class SVM:
     
+    
     def __init__(self, lr=0.001, lambda_param=0.01, n_iters=1000):
-        self.lr = lr                    # taux d'apprentissage
-        self.lambda_param = lambda_param  # régularisation
-        self.n_iters = n_iters          # nombre d'itérations
-        self.w = None                   # coefficients (poids)
-        self.b = None                   # biais (intercept)
-        self.loss_history_ = []         # historique de la perte
-
-    def fit(self, X, y):
-        n_samples, n_features = X.shape
+       
+        self.lr = lr                    # Taux d'apprentissage
+        self.lambda_param = lambda_param  # Paramètre de régularisation
+        self.n_iters = n_iters          # Nombre d'itérations
+        self.w = None                   # Poids (coefficients) du modèle
+        self.b = None                   # Biais (intercept) du modèle
         
-        # Convertir y en -1 et 1 (SVM utilise -1/1 au lieu de 0/1)
+    def fit(self, X, y):
+        
+        n_samples, n_features = X.shape  # Nombre d'échantillons et de caractéristiques
+        
+        # Convertit les étiquettes y en -1 et 1 (SVM utilise -1/1 au lieu de 0/1)
+        # Si y <= 0 -> -1, sinon -> 1
         y_ = np.where(y <= 0, -1, 1)
         
-        # Initialisation des paramètres
-        self.w = np.zeros(n_features)
-        self.b = 0
+        # Initialisation des paramètres à zéro
+        self.w = np.zeros(n_features)    # Vecteur de poids initialisé à 0
+        self.b = 0                       # Biais initialisé à 0
         
-        # Descente de gradient
-        for _ in range(self.n_iters):
+        # Descente de gradient -
+        for _ in range(self.n_iters):   
+            # Parcourt chaque échantillon (descente de gradient stochastique)
             for idx, x_i in enumerate(X):
+                
                 # Vérifie la condition de marge: y_i * (w·x_i - b) >= 1
+                # Si condition vraie : l'échantillon est bien classé et hors marge
                 condition = y_[idx] * (np.dot(x_i, self.w) - self.b) >= 1
                 
                 if condition:
-                    # Mise à jour uniquement de la régularisation
-                    self.w -= self.lr * (2 * self.lambda_param * self.w)
-                else:
-                    # Mise à jour complète avec la perte hinge
-                    self.w -= self.lr * (2 * self.lambda_param * self.w - np.dot(x_i, y_[idx]))
-                    self.b -= self.lr * y_[idx]
-        
-        # Calcul des prédictions 
-        y_pred = self.predict(X)
-        self.accuracy_ = np.mean(y_pred == y_)
+                    # CAS 1: Échantillon respecte la marge
+                    # Mise à jour uniquement de la régularisation (pas de perte)
+                    # Gradient: 2 * λ * w
 
+                    self.w -= self.lr * (2 * self.lambda_param * self.w)
+
+                else:
+                    # CAS 2: Échantillon ne respecte pas la marge
+                    # (mal classé OU à l'intérieur de la marge)
+                    # Mise à jour complète avec la perte hinge
+                    # Gradient pour w: 2 * λ * w - y_i * x_i
+
+
+                    self.w -= self.lr * (2 * self.lambda_param * self.w - np.dot(x_i, y_[idx]))
+
+                    # Mise à jour du biais avec gradient: -y_i
+                    self.b -= self.lr * y_[idx]
+    
     def predict(self, X):
-        # Calcule w·X - b
+        
+      
+        # Calcule la fonction de décision: w·X - b
         approx = np.dot(X, self.w) - self.b
-        # Retourne 1 si positif, -1 si négatif
+        
+        # Retourne le signe: 1 si positif, -1 si négatif, 0 si nul
         return np.sign(approx)
 
 
 
 
+# Création des données d'entraînement
+# X : matrice 
 
-data = pd.read_csv('Data1.csv')
+X = np.array([[1, 2],   # Point 0 
+              [2, 3],   # Point 1
+              [3, 4],   # 
+              [8, 9],   # 
+              [9, 10]]) # 
 
-# Caractéristiques: YearsExperience et Age
-X = data[['YearsExperience', 'age']].values
+# y : étiquettes correspondantes (0 ou 1)
+y = np.array([0, 0, 0, 1, 1])  
 
-# Pour SVM, on doit avoir des classes 0/1
-# On crée une classe basée sur le salaire (ex: salaire > médiane = 1, sinon 0)
-median_salary = np.median(data['Salary'])
-y = (data['Salary'] > median_salary).astype(int)  # 0 ou 1
+# Création d'une instance du modèle SVM
+# lr=0.01 : taux d'apprentissage
+# lambda_param=0.01 : régularisation
+# n_iters=1000 : nombre d'itérations
+svm = SVM(lr=0.01, lambda_param=0.01, n_iters=1000)
 
-plt.scatter(data['YearsExperience'], data['age'], c=y, cmap='coolwarm', s=50)
-plt.xlabel('YearsExperience')
-plt.ylabel('Age')
-plt.title("Données SVM - Couleur = Classe (salaire > médiane)")
-plt.colorbar(label='Classe (0=bas, 1=haut)')
-plt.show()
-
-
-
-svm = SVM(lr=0.001, lambda_param=0.01, n_iters=500)
+# Entraînement du modèle par PEL DE LAFONCTION FIT
 svm.fit(X, y)
 
-# Affichage résultats
+# Prédiction pour un nouveau point [2.5, 3.5]
+prediction = svm.predict([[2.5, 3.5]])
+
+# Affichage du résultat
+print(f"Prédiction pour le point [2.5, 3.5]: {prediction[0]}")
+
+# Affichage des paramètres appris
 print(f"Poids (w): {svm.w}")
 print(f"Biais (b): {svm.b:.4f}")
-print(f"Précision: {svm.accuracy_:.2%}")
 
-
-fig = plt.figure(figsize=(12, 8))
-ax = fig.add_subplot(111, projection='3d')
-
-# Nuage de points 3D
-ax.scatter(X[:,0], X[:,1], y, c=y, cmap='coolwarm', s=50, label='Données')
-
-# Création d'une grille pour l'hyperplan de décision
-x1_range = np.linspace(X[:,0].min(), X[:,0].max(), 20)
-x2_range = np.linspace(X[:,1].min(), X[:,1].max(), 20)
-x1_grid, x2_grid = np.meshgrid(x1_range, x2_range)
-
-# Calcul de la fonction de décision: w·X - b
-Z_grid = svm.w[0] * x1_grid + svm.w[1] * x2_grid - svm.b
-
-# Tracé de l'hyperplan de décision (là où Z = 0)
-ax.plot_surface(x1_grid, x2_grid, Z_grid, alpha=0.3, color='green')
-
-# Tracé du plan à Z=0 (frontière de décision)
-ax.contour(x1_grid, x2_grid, Z_grid, levels=[0], colors='black', linewidths=2)
-
-ax.set_xlabel('YearsExperience')
-ax.set_ylabel('Age')
-ax.set_zlabel('Classe (0 ou 1)')
-ax.set_title("SVM - Frontière de décision (hyperplan séparateur)")
-
-plt.show()
-
-
-
-plt.figure(figsize=(10, 8))
-
-# Nuage de points
-plt.scatter(X[:,0], X[:,1], c=y, cmap='coolwarm', s=50, edgecolors='black')
-
-# Grille pour la frontière
-x_min, x_max = X[:,0].min() - 0.5, X[:,0].max() + 0.5
-y_min, y_max = X[:,1].min() - 0.5, X[:,1].max() + 0.5
-xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100), np.linspace(y_min, y_max, 100))
-
-# Prédiction sur la grille
-Z = svm.predict(np.c_[xx.ravel(), yy.ravel()])
-Z = Z.reshape(xx.shape)
-
-# Tracé de la frontière
-plt.contourf(xx, yy, Z, alpha=0.3, cmap='coolwarm')
-plt.contour(xx, yy, Z, levels=[0], colors='black', linewidths=2)
-
-plt.xlabel('YearsExperience')
-plt.ylabel('Age')
-plt.title(f"SVM - Frontière de décision\nPrécision: {svm.accuracy_:.2%}")
-plt.colorbar(label='Classe')
-plt.grid(True, alpha=0.3)
-plt.show()
-
+# Test sur tous les points d'entraînement
+print("\nPrédictions sur les données d'entraînement:")
+for i, point in enumerate(X):
+    pred = svm.predict([point])[0]
+    print(f"Point {point} -> Prédit: {pred}, Réel: {1 if y[i]==1 else -1}")
