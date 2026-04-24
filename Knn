@@ -1,0 +1,84 @@
+
+# Importer  NumPy pour les calculs numériques et les tableaux
+import numpy as np
+
+# Importer de Counter pour compter les occurrences 
+from collections import Counter
+
+class KNN:
+    
+    # Constructeur de la classe -
+    def __init__(self, k=3):
+        self.k = k                    # Nombre de voisins à considérer (paramètre important)
+        self.X_train = None           # Stockera les données d'entraînement (initialement vide)
+        self.y_train = None           # Stockera les étiquettes d'entraînement (initialement vide)
+        
+    # Méthode pour "entraîner" apel alafction
+    def fit(self, X, y):
+
+        self.X_train = X              # Stocke les caractéristiques (coordonnées) des points
+        self.y_train = y              # Stocke les classes correspondantes (0 ou 1)
+        
+    # Méthode pour prédire les classes de plusieurs échantillons
+    def predict(self, X):
+        # Liste en compréhension : prédit un par un chaque échantillon
+        # Pour chaque x dans X, appelle la méthode _predict_one(x)
+        predictions = [self._predict_one(x) for x in X]
+        
+        # Convertit la liste en tableau numpy et la retourne
+        return np.array(predictions)
+    
+    # Méthode privée (commence par _) pour prédire un seul échantillon
+    def _predict_one(self, x):
+       
+        
+        # Étape 1: Calcul des distances euclidiennes entre x et tous les points d'entraînement
+        # Formule: √[(x₁-x₁')² + (x₂-x₂')² + ...]
+        # np.sqrt() : racine carrée
+        # np.sum() : somme des carrés des différences
+        # (x - x_train)**2 : élève au carré chaque différence
+        distances = [np.sqrt(np.sum((x - x_train)**2)) for x_train in self.X_train]
+        
+        # Étape 2: Trouver les indices des k plus proches voisins
+        # np.argsort() : trie les distances et retourne les indices dans l'ordre croissant
+        # [:self.k] : prend les k premiers indices (les plus petites distances)
+        k_indices = np.argsort(distances)[:self.k]
+        
+        # Étape 3: Récupérer les étiquettes (classes) des k plus proches voisins
+        # Pour chaque indice, prend la classe correspondante dans y_train
+        k_nearest_labels = [self.y_train[i] for i in k_indices]
+        
+        # Étape 4: Vote majoritaire - compter les occurrences de chaque classe
+        # Counter() : crée un dictionnaire {classe: nombre d'occurrences}
+        # Exemple: Counter([0,0,1]) -> {0:2, 1:1}
+        # .most_common(1) : retourne la classe la plus fréquente sous forme de liste
+        # Exemple: [(0, 2)] où 0 est la classe et 2 le nombre
+        most_common = Counter(k_nearest_labels).most_common(1)
+        
+        # Retourne la classe gagnante (le premier élément du tuple)
+        # most_common[0] : (classe, nombre)
+        # most_common[0][0] : juste la classe
+        return most_common[0][0]
+
+
+
+X = np.array([[1, 2],   # Point 0 
+              [2, 3],   # Point 1
+              [3, 4],   # Point 2
+              [8, 9],   # Point 3
+              [9, 10]]) # Point 4
+
+# y : étiquettes correspondantes (0 ou 1)
+y = np.array([0, 0, 0, 1, 1])  # Les 3 premiers sont classe 0, les 2 derniers classe 1
+
+# Créer d'une instance du modèle KNN avec k=3 (3 voisins)
+knn = KNN(k=3)
+
+# Entraînement du modèle
+knn.fit(X, y)
+
+# Prédiction pour un nouveau point [2.5, 3.5]
+prediction = knn.predict([[2.5, 3.5]])
+
+# Affichage du résultat
+print(knn.predict([[2.5, 3.5]]))  # Affiche la classe prédit
