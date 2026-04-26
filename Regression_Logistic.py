@@ -1,0 +1,105 @@
+
+import numpy as np  # Pour les calculs numériques et les tableaux
+import matplotlib.pyplot as plt  # Pour créer des graphiques
+import pandas as pd  # Pour chargement de donnet
+
+
+def sigmoid(z):
+    # La fonction sigmoïde transforme n'importe quel nombre réel en une valeur entre 0 et 1
+    # Formule: 1 / (1 + e^(-z))
+    return 1 / (1 + np.exp(-z))
+
+
+
+
+class LogisticRegression:
+    
+    def __init__(self, lr=0.01, n_iters=1000):
+        self.lr = lr              # Taux d'apprentissage (learning rate) - contrôle l'amplitude des mises à jour
+        self.n_iters = n_iters    # Nombre d'itérations pour la descente de gradient
+        self.weights = None       # Coefficients (poids) du modèle (initialisés à None)
+        self.bias = None          # Biais (intercept) du modèle (initialisé à None)
+
+    def fit(self, X, y):
+        n_samples, n_features = X.shape  # Récupère le nombre d'échantillons et de caractéristiques
+        
+        # Initialisation des paramètres à zéro
+        self.weights = np.zeros(n_features)  # Crée un tableau de zéros de taille n_features
+        self.bias = 0                         # Initialise le biais à 0
+
+    
+        for _ in range(self.n_iters):
+            
+            # Étape 1: Calcul du modèle linéaire (z = w·X + b)
+            linear_model = np.dot(X, self.weights) + self.bias
+            
+            # Étape 2: Application de la sigmoïde pour obtenir les probabilités prédites
+            y_predicted = sigmoid(linear_model)  # Résultat entre 0 et 1
+
+            # Étape 3: Calcul des gradients (dérivées de la fonction de coût)
+            # Gradient des poids: moyenne du produit entre X et l'erreur (y_pred - y)
+            dw = (1 / n_samples) * np.dot(X.T, (y_predicted - y))
+            
+            #moyenne des erreurs
+            db = (1 / n_samples) * np.sum(y_predicted - y)
+
+            # Étape 4: Mise à jour des paramètres
+            self.weights -= self.lr * dw  # Soustrait le gradient pondéré par le taux d'apprentissage
+            self.bias -= self.lr * db     # Même chose pour le biais
+
+    
+    def predict_proba(self, X):
+        # Calcule le modèle linéaire puis applique la sigmoïde
+        linear_model = np.dot(X, self.weights) + self.bias
+        return sigmoid(linear_model)  # Retourne les probabilités (valeurs entre 0 et 1)
+ 
+    def predict(self, X):
+        # Seuil à 0.5: si probabilité > 0.5 -> classe 1, sinon classe 0
+        return [1 if i > 0.5 else 0 for i in self.predict_proba(X)]
+
+
+data = pd.read_csv("Data1.csv")
+
+
+#selectioner les colone
+X = data[['YearsExperience']].values
+
+# Création d'une cible binaire (variable à prédire 0 ou 1)
+median_salary = np.median(data['Salary'])  # Calcule la médiane des salaires
+
+
+y = (data['Salary'] > median_salary).astype(int)  # 1 si salaire > médiane, sinon 0
+
+
+
+model = LogisticRegression(lr=0.01, n_iters=1000)#  crier une instance
+
+# Entraînement du modèle sur les données X et y
+model.fit(X, y)
+
+
+
+# Prédiction des classes sur les données d'entraînement
+y_pred = model.predict(X)
+
+
+
+# Création d'un ensemble de points tests pour tracer la courbe lisse
+# np.linspace génère 300 points entre la valeur min et max de X
+
+X_test = np.linspace(X.min(), X.max(), 300).reshape(-1, 1)
+
+# Obtenu des probabilités pour ces points tests
+y_proba = model.predict_proba(X_test)
+
+# Création de la figure
+plt.scatter(X, y, color='blue', label='Données réelles (0/1)')  # Nuage de points des données réelles
+plt.plot(X_test, y_proba, color='red', label='Courbe de décision')  # Courbe sigmoïde du modèle
+plt.xlabel("YearsExperience")   # Étiquette de l'axe X (années d'expérience)
+plt.ylabel("Probabilité (Salary > médiane)")  # Étiquette de l'axe Y
+plt.title("Régression Logistique")  # Titre du graphique
+plt.legend()  # Affiche la légende
+plt.grid(True, alpha=0.3)  # Ajoute une grille avec transparence de 30%
+plt.show()  # Affiche le graphique
+
+
